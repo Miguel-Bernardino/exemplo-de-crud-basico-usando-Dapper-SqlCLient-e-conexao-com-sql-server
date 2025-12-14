@@ -14,17 +14,21 @@ namespace TesteConexaoDB
 
             var novaEditora = new Editora
             {
-                descrição = "Editora TESTE",
-                endereço = "Rua de teste, 1234"
+                descrição = "Editora Band",
+                endereço = "Rua da Band"
             };
 
             using (var connection = new SqlConnection(connectionString))
             {
 
-                CriarEditora(connection, novaEditora);
+                //CriarEditora(connection, novaEditora);
+                //DeletarMuitasEditoras(connection, new List<int> { 1, 2, 3, 4, 5 });
+                //ExecutarProcedureDeletarEditora(connection, 7);
+                ExcutarProcedureObterLivroPorAutor(connection, "Maria");
+
                 AtualizarEditora(connection, new Editora
                 {
-                    id_editora = 8,
+                    id_editora = 6,
                     descrição = "Editora ATUALIZADA",
                     endereço = "Rua Atualizada, 5678"
                 });
@@ -63,6 +67,18 @@ namespace TesteConexaoDB
 
             }
 
+            static void CriarMuitasEditoras(SqlConnection connection, List<Editora> novasEditoras)
+            {
+                const string insertQuery = @"
+                INSERT INTO Tb_Editora 
+                VALUES (
+                    @descrição, 
+                    @endereço
+                )";
+                var rowsAffected = connection.Execute(insertQuery, novasEditoras);
+                Console.WriteLine($"{rowsAffected} linha(s) inserida(s) com sucesso.");
+            }
+
             static void AtualizarEditora(SqlConnection connection, Editora editoraAtualizada)
             {
                 const string updateQuery = @"
@@ -82,6 +98,53 @@ namespace TesteConexaoDB
 
                 });
                 Console.WriteLine($"{rowsAffected} linha(s) atualizada(s) com sucesso.");
+            }
+
+            static void DeletarEditora(SqlConnection connection, int id_editora)
+            {
+                const string deleteQuery = @"
+                DELETE FROM TB_EDITORA 
+                WHERE 
+                    id_editora = @id_editora";
+
+                var rowsAffected = connection.Execute(deleteQuery, new
+                {
+
+                    id_editora
+
+                });
+                Console.WriteLine($"{rowsAffected} linha(s) deletada(s) com sucesso.");
+            }
+
+            static void DeletarMuitasEditoras(SqlConnection connection, List<int> ids_editoras)
+            {
+                const string deleteQuery = @"
+                DELETE FROM TB_EDITORA 
+                WHERE 
+                    id_editora = @id_editora";
+
+                var rowsAffected = connection.Execute(deleteQuery, ids_editoras.Select(id => new { id_editora = id }));
+
+                Console.WriteLine($"{rowsAffected} linha(s) deletada(s) com sucesso.");
+            }
+
+            static void ExecutarProcedureDeletarEditora(SqlConnection connection, int id)
+            {
+                const string storedProcedureName = "SP_DELETAR_EDITORA";
+                var parameters = new { IdEditora = id };
+                var rowsAffected = connection.Execute(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
+
+            }
+
+            static void ExcutarProcedureObterLivroPorAutor(SqlConnection connection, string nomeAutor)
+            {
+                const string storedProcedureName = "sp_ObterLivrosPorAutor";
+                var parameters = new { NomeAutor = nomeAutor };
+                var livros = connection.Query(storedProcedureName, parameters, commandType: System.Data.CommandType.StoredProcedure);
+                foreach (var livro in livros)
+                {
+                    Console.WriteLine($"{livro.nome} - {livro.título} - {livro.preco}");
+                }
             }
         }
     }
