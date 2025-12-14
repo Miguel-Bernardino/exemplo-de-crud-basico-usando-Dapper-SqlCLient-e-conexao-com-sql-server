@@ -1,29 +1,28 @@
--- Exemplo de Tabela "Pai" (Categoria)
 CREATE TABLE Tb_Editora
 (
     -- ID (Chave Primária)
-    id_editora      INT        NOT NULL    PRIMARY KEY IDENTITY(1,1),
+    id_editora          INT         NOT NULL    PRIMARY KEY IDENTITY(1,1),
     
     -- Colunas da Tabela
-    descrição      NVARCHAR(100)  NOT NULL,
-    endereço       NVARCHAR(500)  NULL, -- NULL explícito para clareza
+    descrição           NVARCHAR(100)   NOT NULL,
+    endereço            NVARCHAR(500)   NULL,
 );
-GO -- Comando para separar lotes no SQL Server
+GO 
 
 CREATE TABLE Tb_Livro
 (
     -- ID (Chave Primária)
-    id_livro       INT        NOT NULL    PRIMARY KEY IDENTITY(1,1),
+    id_livro           INT         NOT NULL    PRIMARY KEY IDENTITY(1,1),
     
     -- Colunas da Tabela
-    título         NVARCHAR(200)   NOT NULL,
-    preco          DECIMAL(10,2)   NOT NULL, 
-    id_editora     INT             NOT NULL, -- Chave Estrangeira
+    título             NVARCHAR(200)    NOT NULL,
+    preco              DECIMAL(10,2)    NOT NULL, 
+    id_editora         INT              NOT NULL, -- Chave Estrangeira
     
     -- Definição da Chave Estrangeira
     CONSTRAINT FK_Livro_Editora FOREIGN KEY (id_editora)
         REFERENCES Tb_Editora(id_editora)
-        ON DELETE CASCADE -- Ação de exclusão em cascata
+        ON DELETE CASCADE
 );
 GO
 
@@ -54,20 +53,84 @@ CREATE TABLE TB_Autoria (
 );
 GO
 
-CREATE TABLE Tb_Funcionario(
-
-    id_funcionario INT NOT NULL PRIMARY KEY IDENTITY(1,1),
-    nome NVARCHAR(100) NOT NULL,
-    sexo CHAR(1) NOT NULL,
+CREATE TABLE TB_CARGO
+(
+    CODIGO          SMALLINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    DESCRICAO       NVARCHAR(30)            NOT NULL,
 );
 GO
 
+CREATE TABLE TB_SETOR
+(
+    CODIGO          SMALLINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    DESCRICAO           VARCHAR(30)         NOT NULL,
+);
+GO
+
+CREATE TABLE TB_CIDADE
+(
+    CODIGO          SMALLINT NOT NULL PRIMARY KEY IDENTITY(1,1),
+    DESCRICAO           NVARCHAR(30)         NOT NULL,
+);
+GO
+
+CREATE TABLE TB_FUNCIONARIO
+(
+   MATRICULA             INT               NOT NULL,
+   NOME                  VARCHAR(50)       NOT NULL,
+   LOGRADOURO            VARCHAR(50)       NOT NULL,
+   NUMEROENDERECO        INT               ,
+   COMPLENDERECO         VARCHAR(20)       ,
+   BAIRRO                VARCHAR(30)       ,
+   CIDADE                SMALLINT          NOT NULL,
+   CEP                   CHAR(08)          NOT NULL,
+   PONTOREFERENCIA       VARCHAR(60)       ,
+   TELEFONE              VARCHAR(10)       DEFAULT '0000000000',
+   E_MAIL                VARCHAR(60)       ,
+   SEXO                  CHAR(01)          NOT NULL,
+   ESTADOCIVIL           CHAR(01)          NOT NULL,
+   DATANASCIMENTO        DATE              NOT NULL,
+   CPF                   CHAR(11)          NOT NULL,
+   DATAADMISSAO          DATE              NOT NULL,
+   DATADEMISSAO          DATE,
+   
+   -- Restrições Inseridas:
+   CONSTRAINT PK_FUNCIONARIO PRIMARY KEY (MATRICULA),
+   CONSTRAINT FK_EMPREGADOCIDADE FOREIGN KEY(CIDADE)
+             REFERENCES TB_CIDADE(CODIGO)
+);
+GO
+
+CREATE TABLE TB_HISTORICO
+(
+   ANO                   SMALLINT          NOT NULL,
+   MES                   SMALLINT          NOT NULL,
+   MATRICULA             INT               NOT NULL,
+   CARGO                 SMALLINT          NOT NULL,
+   SETOR                 SMALLINT          NOT NULL,
+   HORASMENSAIS          SMALLINT          NOT NULL,
+   SALARIOBASE           NUMERIC(11,2)     NOT NULL,
+
+   -- Restrições Inseridas:
+   CONSTRAINT PK_HISTORICO PRIMARY KEY (ANO, MES, MATRICULA),
+   CONSTRAINT FK_HISTORICO_FUNCIONARIO FOREIGN KEY(MATRICULA)
+                                     REFERENCES TB_FUNCIONARIO(MATRICULA),
+   CONSTRAINT FK_HISTORICO_CARGO FOREIGN KEY(CARGO)
+                                     REFERENCES TB_CARGO(CODIGO),
+   CONSTRAINT FK_HISTORICO_SETOR FOREIGN KEY(SETOR)
+                                     REFERENCES TB_SETOR(CODIGO)
+);
+GO
+
+-- INSERTS e Consultas permanecem inalterados, mas os inserts em TB_FUNCIONARIO precisam de todos os NOT NULL
+-- (Mantendo os inserts corrigidos da resposta anterior para TB_FUNCIONARIO)
 INSERT INTO Tb_Editora (descrição, endereço) VALUES
 ('Campus', 'Rua do Timbó'),
 ('Abril', null),
 ('Globo', null),
 ('Teste', null);
 GO
+
 
 INSERT INTO Tb_Livro (título, preco, id_editora) VALUES
 ('Banco de Dados', 100.00, 1),
@@ -90,16 +153,95 @@ INSERT INTO TB_Autoria (id_livro, id_autor) VALUES
 (3, 3);
 GO
 
-INSERT INTO Tb_Funcionario (nome, sexo) VALUES
-('João', 'M'),
-('Carla', 'F'),
-('Osvaldo', 'M');
+-- ----------------------------------------------------
+-- INSERÇÃO COMPLETA NA TB_FUNCIONARIO
+-- Utiliza todos os campos NOT NULL e FKs
+-- ----------------------------------------------------
+INSERT INTO TB_FUNCIONARIO (
+    MATRICULA, NOME, LOGRADOURO, NUMEROENDERECO, COMPLENDERECO, BAIRRO, 
+    CIDADE, CEP, PONTOREFERENCIA, TELEFONE, E_MAIL, SEXO, 
+    ESTADOCIVIL, DATANASCIMENTO, CPF, DATAADMISSAO, DATADEMISSAO
+) VALUES
+(
+    1001, 'João Silva', 'Rua das Flores', 150, 'Apto 101', 'Pituba', 
+    1, '41830000', 'Perto do mercado', '7199999999', 'joao.silva@empresa.com.br', 'M', 
+    'C', '1985-05-15', '11122233344', '2018-03-01', NULL
+),
+(
+    1002, 'Carla Santos', 'Avenida Principal', 450, NULL, 'Itaigara', 
+    2, '40150100', 'Próximo ao Shopping', '7388888888', 'carla.santos@empresa.com.br', 'F', 
+    'S', '1990-11-20', '55566677788', '2019-07-10', NULL
+),
+(
+    1003, 'Osvaldo Neto', 'Travessa da Paz', 22, 'Casa', 'Centro', 
+    3, '42700000', 'Em frente à praça', '7177777777', 'osvaldo.neto@empresa.com.br', 'M', 
+    'D', '1976-01-08', '99900011122', '2015-01-20', '2022-12-31'
+),
+-- João (Intersecção com Autor)
+(
+    1004, 'João', 'Rua dos Saberes', 50, NULL, 'Brotas', 
+    1, '40280000', 'Perto da escola', '7166666666', 'joao.autor@empresa.com.br', 'M', 
+    'C', '1970-01-01', '44455566677', '2023-01-01', NULL
+),
+-- Carla (Intersecção com Autor)
+(
+    1005, 'Carla', 'Avenida das Letras', 1200, 'Sala 5', 'Comércio', 
+    3, '40015000', NULL, '7155555555', 'carla.autor@empresa.com.br', 'F', 
+    'S', '1964-12-08', '88899900011', '2024-06-15', NULL
+);
+GO
+
+-- ----------------------------------------------------
+-- INSERÇÃO COMPLETA NA TB_HISTORICO
+-- Utiliza todos os campos NOT NULL e FKs
+-- ----------------------------------------------------
+INSERT INTO TB_HISTORICO (
+    ANO, MES, MATRICULA, CARGO, SETOR, HORASMENSAIS, SALARIOBASE
+) VALUES
+-- Histórico de João Silva (Matrícula 1001)
+(2023, 10, 1001, 1, 5, 160, 4500.00), -- Out/2023: Programador (1), Desenvolvimento (5)
+(2023, 11, 1001, 2, 5, 160, 6000.00), -- Nov/2023: Promovido a Analista (2)
+
+-- Histórico de Carla Santos (Matrícula 1002)
+(2023, 10, 1002, 3, 3, 160, 9500.00), -- Out/2023: Gerente (3), Financeiro (3)
+
+-- Histórico de Osvaldo Neto (Matrícula 1003) - Demitido
+(2022, 10, 1003, 4, 1, 160, 5200.00), -- Out/2022: Administrador (4), Administração (1)
+-- Histórico para João (Matrícula 1004)
+(2024, 11, 1004, 3, 4, 160, 8000.00), -- Gerente (3), RH (4)
+-- Histórico para Carla (Matrícula 1005)
+(2024, 11, 1005, 5, 1, 160, 2500.00); -- Copeira (5), Administração (1)
+GO
+
+
+INSERT INTO TB_CARGO (DESCRICAO) VALUES ('PROGRAMADOR');
+INSERT INTO TB_CARGO (DESCRICAO) VALUES ('ANALISTA');
+INSERT INTO TB_CARGO (DESCRICAO) VALUES ('GERENTE');
+INSERT INTO TB_CARGO (DESCRICAO) VALUES ('ADMINISTRADOR');
+INSERT INTO TB_CARGO (DESCRICAO) VALUES ('COPEIRA');
+
+INSERT INTO TB_SETOR (DESCRICAO) VALUES ('ADMINISTRAÇÃO');
+INSERT INTO TB_SETOR (DESCRICAO) VALUES ('PRODUÇÃO');
+INSERT INTO TB_SETOR (DESCRICAO) VALUES ('FINANCEIRO');
+INSERT INTO TB_SETOR (DESCRICAO) VALUES ('RH');
+INSERT INTO TB_SETOR (DESCRICAO) VALUES ('DESENVOLVIMENTO');
+
+INSERT INTO TB_CIDADE (DESCRICAO) VALUES ('SALVADOR');
+INSERT INTO TB_CIDADE (DESCRICAO) VALUES ('ITABUNA');
+INSERT INTO TB_CIDADE (DESCRICAO) VALUES ('LAURO DE FREITAS');
+
+COMMIT;
 
 select * from tb_editora;
 SELECT * FROM tb_livro;
 SELECT * FROM TB_Autor;
 SELECT * FROM TB_Autoria;
 SELECT * FROM Tb_Funcionario;
+SELECT * FROM TB_CARGO;
+SELECT * FROM TB_SETOR;
+SELECT * FROM TB_CIDADE;
+SELECT * FROM TB_HISTORICO;
+-- Consultas SQL
 
 /*1. Reajustar os preços de todos livros em 10%*/
 UPDATE Tb_Livro
@@ -178,7 +320,7 @@ SELECT L2.título, L2.preco, (
 FROM Tb_Livro L2;
 GO
 
--- 15.	Apresentar o nome dos autores que nasceram no mês de outubro
+-- 15.  Apresentar o nome dos autores que nasceram no mês de outubro
 SELECT nome FROM TB_Autor
 WHERE MONTH(data_nascimento) = 10;
 GO
@@ -283,3 +425,32 @@ SELECT * FROM (
 ) AS Abril;
 GO
 
+CREATE OR ALTER PROCEDURE sp_ObterLivrosPorAutor
+    @NomeAutor NVARCHAR(100)
+AS
+BEGIN
+    SELECT R.nome, L.título, L.preco FROM TB_Autoria A
+    JOIN Tb_Livro L ON A.id_livro = L.id_livro
+    JOIN TB_Autor R ON A.id_autor = R.id_autor
+    WHERE R.nome = @NomeAutor;
+END
+GO
+
+CREATE OR ALTER PROCEDURE SP_DELETAR_EDITORA
+    @IdEditora INT 
+AS
+BEGIN
+    DELETE FROM Tb_Editora
+    WHERE id_editora = @IdEditora;
+END
+GO
+
+
+/*
+DECLARE @kill VARCHAR(8000) = '';
+SELECT @kill = @kill + 'KILL ' + CONVERT(VARCHAR(5),session_id) + '; '
+FROM sys.dm_exec_sessions
+WHERE database_id = DB_ID('TESTE') AND session_id <> @@SPID;
+EXEC(@kill);
+GO
+*/
